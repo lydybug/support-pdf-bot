@@ -12,6 +12,14 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = FastAPI()
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
@@ -56,3 +64,4 @@ Question:
         "answer": response.choices[0].message.content,
         "pages": page_nums
     }
+
