@@ -1,42 +1,37 @@
 import os
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
-from pydantic import BaseModel
-import faiss, pickle
-from sentence_transformers import SentenceTransformer
+import pickle
+import re
 import openai
+from fastapi import FastAPI
+from pydantic import BaseModel
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
-from fastapi.responses import FileResponse
 
-@app.get("/")
-def home():
-    return FileResponse("index.html")
-
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
-index = faiss.read_index("index.faiss")
-chunks, metadata = pickle.load(open("data.pkl", "rb"))
+pages = pickle.load(open("data.pkl", "rb"))
 
 class Question(BaseModel):
     question: str
 
+def score(text, words):
+    return sum(text.lower().count(w) for w in words)
+
 @app.post("/ask")
 def ask(q: Question):
-    q_vec = model.encode([q.question])
-    _, ids = index.search(q_vec, 3)
+    words = re.findall(r"\w+", q.question.lower())
+    ranked = sorted(pages, key=lambda p: score(p["text"], words), reverse=True)
+    top = ranked[:2]
 
-    sources = [chunks[i] for i in ids[0]]
-    pages = list(set(metadata[i]["page"] for i in ids[0]))
+    source_text = " ".join(p["text"][:2000] for p in top)
+    page_nums = [p["page"] for p in top]
 
     prompt = f"""
 Use ONLY the text below.
-Give a short, clear summary (2–4 sentences).
+Answer clearly in 2–4 sentences.
 
 Text:
-{sources}
+{source_text}
 
 Question:
 {q.question}
@@ -49,5 +44,6 @@ Question:
 
     return {
         "answer": response.choices[0].message.content,
-        "pages": pages
+        "pages": page_nums
     }
+
