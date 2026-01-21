@@ -4,10 +4,18 @@ import re
 import openai
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/")
+def home():
+    return FileResponse("static/index.html")
 
 pages = pickle.load(open("data.pkl", "rb"))
 
@@ -46,4 +54,3 @@ Question:
         "answer": response.choices[0].message.content,
         "pages": page_nums
     }
-
