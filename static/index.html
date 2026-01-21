@@ -2,7 +2,9 @@
 <html>
 <head>
 <title>Support Assistant</title>
+<meta charset="UTF-8">
 </head>
+
 <body style="font-family:Arial;padding:40px">
 
 <h2>Support Assistant</h2>
@@ -15,25 +17,44 @@
 <script>
 async function ask() {
   const q = document.getElementById("q").value;
+
+  if (!q.trim()) {
+    document.getElementById("a").textContent = "Please type a question.";
+    return;
+  }
+
   document.getElementById("a").textContent = "Searching...";
 
   try {
     const r = await fetch("/ask", {
       method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({question:q})
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        question: q
+      })
     });
 
     const data = await r.json();
-    document.getElementById("a").textContent =
-      data.answer + "\n\nSource pages: " + data.pages.join(", ");
 
-  } catch (err) {
-    document.getElementById("a").textContent = "Error connecting to server.";
-    console.error(err);
+    if (data.answer) {
+      document.getElementById("a").textContent =
+        data.answer + "\n\nSource pages: " + data.pages.join(", ");
+    } else {
+      document.getElementById("a").textContent = "No answer returned.";
+    }
+
+  } catch (e) {
+    console.error(e);
+    document.getElementById("a").textContent = "Server connection error.";
   }
 }
 </script>
 
 </body>
 </html>
+
+</body>
+</html>
+
