@@ -3,14 +3,11 @@
 <head>
 <title>Support Assistant</title>
 </head>
-
 <body style="font-family:Arial;padding:40px">
 
-<h2>Ask a Question</h2>
+<h2>Support Assistant</h2>
 
-<input id="q" placeholder="Type the caller's question here"
-style="width:400px;padding:8px">
-
+<input id="q" placeholder="Type your question here" style="width:420px;padding:8px">
 <button onclick="ask()">Get Answer</button>
 
 <pre id="a" style="margin-top:20px;background:#f4f4f4;padding:15px"></pre>
@@ -18,16 +15,23 @@ style="width:400px;padding:8px">
 <script>
 async function ask() {
   const q = document.getElementById("q").value;
+  document.getElementById("a").textContent = "Searching...";
 
-  const r = await fetch("/ask", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({question:q})
-  });
+  try {
+    const r = await fetch("/ask", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({question:q})
+    });
 
-  const data = await r.json();
-  document.getElementById("a").textContent =
-    data.answer + "\n\nSource pages: " + data.pages.join(", ");
+    const data = await r.json();
+    document.getElementById("a").textContent =
+      data.answer + "\n\nSource pages: " + data.pages.join(", ");
+
+  } catch (err) {
+    document.getElementById("a").textContent = "Error connecting to server.";
+    console.error(err);
+  }
 }
 </script>
 
