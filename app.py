@@ -3,16 +3,9 @@ import pickle
 import re
 import openai
 from fastapi import FastAPI
-from pydantic import BaseModel
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
-
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,13 +14,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
+from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 def home():
-    return FileResponse(os.path.join(BASE_DIR, "static", "index.html"))
+    return FileResponse("static/index.html")
 
-pages = pickle.load(open(os.path.join(BASE_DIR, "data.pkl"), "rb"))
+pages = pickle.load(open("data.pkl", "rb"))
 
 class Question(BaseModel):
     question: str
@@ -64,4 +65,3 @@ Question:
         "answer": response.choices[0].message.content,
         "pages": page_nums
     }
-
